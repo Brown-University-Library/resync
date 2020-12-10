@@ -84,7 +84,12 @@ class ListBaseWithIndex(ListBase):
         are mapped to the filesystem also.
         """
         try:
-            fh = URLopener().open(uri)
+            # fh = URLopener().open(uri) #original command
+            initial_fh = URLopener()
+            token =  'Bearer ' + os.environ['POD_Access_Token']
+            header = ('Authorization', token)
+            initial_fh.addheader(*header)
+            fh = initial_fh.open(uri)
             self.num_files += 1
         except IOError as e:
             raise IOError(
@@ -92,12 +97,15 @@ class ListBaseWithIndex(ListBase):
                 (uri, str(e)))
         # Get the Content-Length if we can (works fine for local files)
         try:
+            print(f'fh.info() = {fh.info()}')
             self.content_length = int(fh.info()['Content-Length'])
             self.bytes_read += self.content_length
             self.logger.debug(
                 "Read %d bytes from %s" %
                 (self.content_length, uri))
-        except KeyError:
+        # except KeyError:
+        except Exception as e:
+            print(f'Error: {e}')
             # If we don't get a length then c'est la vie
             self.logger.debug("Read ????? bytes from %s" % (uri))
             pass
